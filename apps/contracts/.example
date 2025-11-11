@@ -1,0 +1,9 @@
+PRIVATE_KEY=0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+RPC_URL=https://forno.celo-sepolia.celo-testnet.org
+CHAIN_ID=11142220
+MARKET_MANAGER_ADDRESS=0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+TREASURY_ADDRESS=0xcccccccccccccccccccccccccccccccccccccccc
+RESOLVER_ADDRESS=0xdddddddddddddddddddddddddddddddddddddddd
+CELOSCAN_API_KEY=your-celoscan-key
+REPORT_GAS=false
+
