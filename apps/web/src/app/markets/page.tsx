@@ -4,10 +4,14 @@ import { Container } from "@/components/layout/container";
 import { MarketGallery } from "@/components/markets/market-gallery";
 import { Button } from "@/components/ui/button";
 import { fetchMarkets } from "@/lib/api/markets";
+import { getTrendingMarkets } from "@/lib/markets/trending";
+
+// Revalidate every 10 seconds to get fresh market data
+export const revalidate = 10;
 
 export default async function MarketsPage() {
   const markets = await fetchMarkets();
-  const trendingMarkets = markets.filter((market) => market.status === "Live").slice(0, 4);
+  const trendingMarkets = getTrendingMarkets(markets, 4);
 
   return (
     <main className="bg-[#F5F7FA] pb-20 pt-12 sm:pt-16">

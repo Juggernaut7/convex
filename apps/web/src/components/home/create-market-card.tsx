@@ -1,11 +1,13 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { CalendarClock, Rocket, Sparkles, Zap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { sleep } from "@/lib/app-utils";
 import { cn } from "@/lib/utils";
+import { useCreateMarket } from "@/lib/hooks/use-create-market";
+import { useAccount } from "wagmi";
 
 type Category = "Sports" | "Crypto" | "Culture";
 type ResolutionMode = "manual" | "oracle";
@@ -72,6 +74,44 @@ export function CreateMarketCard() {
   const [formState, setFormState] = useState<FormState>(defaultFormState);
   const [errors, setErrors] = useState<FormErrors>({});
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const router = useRouter();
+  const { isConnected } = useAccount();
+  const { createMarket: createMarketOnChain, isPending, isSuccess: txSuccess, error: txError, marketId, storeMetadata } = useCreateMarket();
+
+  useEffect(() => {
+    if (txError) {
+      setSubmitError(txError.message || "Transaction failed");
+      setStatus("idle");
+    }
+  }, [txError]);
+
+  useEffect(() => {
+    if (txSuccess && status === "submitting" && marketId !== null && marketId !== undefined) {
+      setStatus("success");
+      
+      // Store metadata in backend (don't block navigation if it fails)
+      storeMetadata({
+        question: formState.question.trim(),
+        category: formState.category,
+        resolutionSource: formState.resolution,
+        marketId,
+      })
+        .then(() => {
+          console.log(`✅ Market metadata stored for market #${marketId}`);
+        })
+        .catch((error) => {
+          console.error("❌ Failed to store market metadata:", error);
+          // Don't block navigation if metadata storage fails
+        });
+
+      // Redirect to market detail page after a short delay
+      setTimeout(() => {
+        router.push(`/market/${marketId}`);
+      }, 1500);
+    }
+  }, [txSuccess, status, router, marketId, storeMetadata, formState.question, formState.category, formState.resolution]);
 
   const selectedDuration = useMemo(
     () => durationOptions.find((option) => option.value === formState.duration),
@@ -122,11 +162,15 @@ export function CreateMarketCard() {
       nextErrors.resolution = "Oracle flows ship after the hackathon.";
     }
 
+    if (!closingTimestamp) {
+      nextErrors.duration = "Select a closing window.";
+    }
+
     return nextErrors;
   };
 
-  const isSubmitting = status === "submitting";
-  const isSuccess = status === "success";
+  const isSubmitting = status === "submitting" || isPending;
+  const isSuccess = status === "success" || txSuccess;
 
   const isFormValid = useMemo(() => {
     const validation = validateForm();
@@ -142,26 +186,34 @@ export function CreateMarketCard() {
     event.preventDefault();
     const validation = validateForm();
     setErrors(validation);
+    setSubmitError(null);
 
     if (Object.keys(validation).length > 0) {
       return;
     }
 
+    if (!closingTimestamp) {
+      setSubmitError("Select a valid closing window.");
+      return;
+    }
+
+    if (!isConnected) {
+      setSubmitError("Please connect your wallet to create a market.");
+      return;
+    }
+
     try {
       setStatus("submitting");
-      await sleep(600);
-
-      console.info("[convex] market draft", {
-        ...formState,
-        closingLabel,
+      await createMarketOnChain({
+        question: formState.question.trim(),
+        category: formState.category,
+        closeTime: Math.floor(closingTimestamp.getTime() / 1000),
+        entryAmount: formState.entryAmount || 5,
+        resolutionSource: formState.resolution,
       });
-
-      setStatus("success");
-      setTimeout(() => {
-        setStatus("idle");
-      }, 4_000);
     } catch (error) {
-      console.error("Failed to prepare market draft:", error);
+      console.error("Failed to create market:", error);
+      setSubmitError(error instanceof Error ? error.message : "Failed to create market");
       setStatus("idle");
     }
   };
@@ -413,9 +465,14 @@ export function CreateMarketCard() {
         </div>
 
         <div className="mt-6 min-h-[20px]" aria-live="polite" role="status">
+          {submitError && (
+            <div className="rounded-2xl border border-[#FECACA] bg-[#FEF2F2] px-4 py-3 text-sm font-medium text-[#991B1B]">
+              {submitError}
+            </div>
+          )}
           {isSuccess && (
             <div className="rounded-2xl border border-[#DCFCE7] bg-[#F0FDF4] px-4 py-3 text-sm font-medium text-[#166534]">
-              Market draft ready. Connect the admin portal to publish on-chain.
+              Market created on-chain. Redirecting to detail view...
             </div>
           )}
         </div>

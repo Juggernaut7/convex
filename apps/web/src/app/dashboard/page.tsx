@@ -1,10 +1,11 @@
+"use client";
+
 import { Container } from "@/components/layout/container";
 import { DashboardPredictions } from "@/components/dashboard/predictions";
 import { ConnectWalletCard } from "@/components/home/connect-card";
 import { MyMarketsCard } from "@/components/home/my-markets-card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-
 export default function DashboardPage() {
   return (
     <main className="bg-[#F5F7FA] pb-20 pt-12 sm:pt-16">
@@ -40,5 +41,3 @@ export default function DashboardPage() {
     </main>
   );
 }
-
-

@@ -27,15 +27,19 @@ export function MarketTabs({ markets }: MarketTabsProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredMarkets = useMemo(
-    () =>
-      markets.filter(
-        (market) =>
-          market.category === activeCategory &&
-          market.title.toLowerCase().includes(searchTerm.toLowerCase())
-      ),
-    [activeCategory, markets, searchTerm]
-  );
+  const filteredMarkets = useMemo(() => {
+    const filtered = markets.filter(
+      (market) =>
+        market.category === activeCategory &&
+        market.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    // Sort markets: Live first, then Closed/Resolved/Void at the bottom
+    return filtered.sort((a, b) => {
+      const statusOrder: Record<string, number> = { Live: 0, Closed: 1, Resolved: 2, Void: 3 };
+      return (statusOrder[a.status] ?? 999) - (statusOrder[b.status] ?? 999);
+    });
+  }, [activeCategory, markets, searchTerm]);
 
   const handleSelect = (market: MarketViewModel, choice: "yes" | "no") => {
     if (!market.canStake) return;
@@ -102,50 +106,50 @@ export function MarketTabs({ markets }: MarketTabsProps) {
                 key={market.id}
                 className="rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] p-5 transition hover:border-[#35D07F]/60 hover:shadow-sm"
               >
-                <div className="flex h-full flex-col space-y-4">
-                  <div className="space-y-3">
-                    <p className="text-sm font-semibold text-[#111827] sm:text-base">{market.title}</p>
-                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#4B5563]">
-                      <span className="inline-flex items-center gap-1">
-                        <Clock3 className="h-4 w-4 text-[#35D07F]" />
-                        Closes in {market.closesIn}
-                      </span>
-                      <span className="inline-flex items-center gap-1 font-medium">
-                        <TrendingUp className="h-4 w-4 text-[#35D07F]" />
+              <div className="flex h-full flex-col space-y-4">
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold text-[#111827] sm:text-base">{market.title}</p>
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#4B5563]">
+                    <span className="inline-flex items-center gap-1">
+                      <Clock3 className="h-4 w-4 text-[#35D07F]" />
+                      Closes in {market.closesIn}
+                    </span>
+                    <span className="inline-flex items-center gap-1 font-medium">
+                      <TrendingUp className="h-4 w-4 text-[#35D07F]" />
                         {formatNumber(market.totalPool)} cUSD pool
-                      </span>
-                    </div>
-                    <div className="relative h-2 w-full overflow-hidden rounded-full bg-[#E5E7EB]">
-                      <div
-                        className="absolute left-0 top-0 h-full rounded-full bg-[#35D07F] transition-all"
-                        style={{ width: `${market.yesOdds}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-xs text-[#4B5563]">
-                      <span>Yes {market.yesOdds}%</span>
-                      <span>No {market.noOdds}%</span>
-                    </div>
+                    </span>
                   </div>
-
-                  <div className="mt-auto grid grid-cols-2 gap-3">
-                    <Button
-                      className="rounded-2xl bg-[#35D07F] text-sm font-semibold text-white hover:bg-[#29b46e]"
-                      onClick={() => handleSelect(market, "yes")}
-                      disabled={!market.canStake}
-                    >
-                      Yes · {market.yesMultiplier.toFixed(1)}x
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="rounded-2xl border border-[#E5E7EB] bg-white text-sm font-semibold text-[#111827] hover:bg-[#F3F4F6]"
-                      onClick={() => handleSelect(market, "no")}
-                      disabled={!market.canStake}
-                    >
-                      No · {market.noMultiplier.toFixed(1)}x
-                    </Button>
+                  <div className="relative h-2 w-full overflow-hidden rounded-full bg-[#E5E7EB]">
+                    <div
+                      className="absolute left-0 top-0 h-full rounded-full bg-[#35D07F] transition-all"
+                      style={{ width: `${market.yesOdds}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs text-[#4B5563]">
+                    <span>Yes {market.yesOdds}%</span>
+                    <span>No {market.noOdds}%</span>
                   </div>
                 </div>
-              </article>
+
+                <div className="mt-auto grid grid-cols-2 gap-3">
+                  <Button
+                    className="rounded-2xl bg-[#35D07F] text-sm font-semibold text-white hover:bg-[#29b46e]"
+                    onClick={() => handleSelect(market, "yes")}
+                      disabled={!market.canStake}
+                  >
+                    Yes · {market.yesMultiplier.toFixed(1)}x
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="rounded-2xl border border-[#E5E7EB] bg-white text-sm font-semibold text-[#111827] hover:bg-[#F3F4F6]"
+                    onClick={() => handleSelect(market, "no")}
+                      disabled={!market.canStake}
+                  >
+                    No · {market.noMultiplier.toFixed(1)}x
+                  </Button>
+                </div>
+              </div>
+            </article>
             ))
           )}
         </div>

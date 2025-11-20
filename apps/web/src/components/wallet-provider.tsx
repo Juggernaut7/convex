@@ -50,7 +50,7 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
         console.error("Failed to auto-connect to MiniPay:", error);
       }
     };
-
+    
     void autoConnect();
   }, [connect, connectors]);
 

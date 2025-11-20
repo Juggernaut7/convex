@@ -1,14 +1,25 @@
 PORT=4000
 NODE_ENV=development
-MONGO_URI=
-JWT_SECRET=
-JWT_EXPIRES_IN=1d
-RESOLVER_PRIVATE_KEY=0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  # replace with actual resolver key
-RPC_URL=https://forno.sepolia.celo-testnet.org
-MANAGER_CONTRACT_ADDRESS=0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb  # replace with deployed ConvexMarketManager
-DEFAULT_MARKET_THRESHOLD=4000
-COINGECKO_API_KEY=                                       # optional, only if you have one
-SPORTS_API_KEY=                                            
+
+# MongoDB
+MONGO_URI=mongodb://localhost:27017/convex
+
+# Celo / contracts
+RPC_URL=https://forno.celo-sepolia.celo-testnet.org
+CHAIN_ID=11142220
+MANAGER_CONTRACT_ADDRESS=0xD1DbF3F78bC53d918CBca130Ddc7784574181075
+
+# Resolver wallet (controls on-chain resolution)
+RESOLVER_PRIVATE_KEY=0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+# Oracle configuration
+COINGECKO_API_URL=https://api.coingecko.com/api/v3/simple/price
+SPORTS_API_URL=https://api.example.com/sports
+SPORTS_API_KEY=your-sports-api-key
+
+# Oracle job settings
 ORACLE_POLL_INTERVAL_MS=60000
 ORACLE_MAX_RETRIES=5
-ALLOW_SELF_SIGNED_CERTS=false
+ORACLE_CACHE_TTL_SECONDS=60
+
+

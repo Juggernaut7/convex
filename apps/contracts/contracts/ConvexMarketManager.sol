@@ -9,14 +9,18 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 
 /**
  * @title ConvexMarketManager
- * @notice Binary conviction markets with off-chain oracle resolution support.
- * @dev Focused on hackathon velocity while maintaining sensible safety guards.
+ * @notice Admin-curated conviction markets for crypto and sports prediction.
+ * @dev This contract focuses on:
+ *      - holding market state and pools,
+ *      - enforcing staking + claiming rules,
+ *      - allowing a designated resolver address to finalize outcomes.
+ *      External oracle / backend logic runs off-chain and calls `finalizeFromResolver`.
  */
 contract ConvexMarketManager is AccessControl, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // ---------------------------------------------------------------------
-    // Constants & roles
+    // Roles & constants
     // ---------------------------------------------------------------------
 
     bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
@@ -31,6 +35,11 @@ contract ConvexMarketManager is AccessControl, Pausable, ReentrancyGuard {
     // Types
     // ---------------------------------------------------------------------
 
+    enum MarketType {
+        Price,
+        Sports
+    }
+
     enum Outcome {
         Undefined,
         Yes,
@@ -39,9 +48,16 @@ contract ConvexMarketManager is AccessControl, Pausable, ReentrancyGuard {
 
     enum MarketStatus {
         Live,
-        Closed,
+        Resolving,
         Resolved,
         Void
+    }
+
+    enum Comparator {
+        GreaterThan,
+        GreaterThanOrEqual,
+        LessThan,
+        LessThanOrEqual
     }
 
     struct Position {
@@ -49,17 +65,10 @@ contract ConvexMarketManager is AccessControl, Pausable, ReentrancyGuard {
         uint128 noStake;
     }
 
-    struct OracleCondition {
-        bytes32 conditionType; // e.g. keccak256("PRICE_GREATER_THAN")
-        string dataFeedId; // CoinGecko asset id, fixture id, etc.
-        int256 targetValue;
-        string targetDescription; // human readable (optional)
-        bytes extraData; // opaque payload for backend automation
-    }
-
     struct Market {
-        bytes32 questionId;
-        string metadataURI;
+        MarketType marketType;
+        MarketStatus status;
+        Outcome winningOutcome;
         address creator;
         address resolver;
         uint64 closeTime;
@@ -70,20 +79,18 @@ contract ConvexMarketManager is AccessControl, Pausable, ReentrancyGuard {
         uint128 noPool;
         uint128 payoutPool;
         uint128 totalWinningStake;
-        MarketStatus status;
-        Outcome winningOutcome;
-        bool usesOracle;
+        bytes32 metadataHash;
     }
 
     struct CreateMarketParams {
-        bytes32 questionId;
+        MarketType marketType;
         uint64 closeTime;
         address resolver;
-        bool usesOracle;
         uint16 protocolFeeBps;
         uint16 creatorFeeBps;
-        string metadataURI;
-        OracleCondition condition;
+        bytes32 metadataHash;
+        // extraData slot reserved for future extensions (not used by core logic)
+        bytes extraData
     }
 
     // ---------------------------------------------------------------------
@@ -95,7 +102,6 @@ contract ConvexMarketManager is AccessControl, Pausable, ReentrancyGuard {
     uint32 public nextMarketId;
 
     mapping(uint32 => Market) public markets;
-    mapping(uint32 => OracleCondition) private _oracleConditions;
     mapping(uint32 => mapping(address => Position)) private _positions;
 
     // ---------------------------------------------------------------------
@@ -104,62 +110,51 @@ contract ConvexMarketManager is AccessControl, Pausable, ReentrancyGuard {
 
     event MarketCreated(
         uint32 indexed marketId,
-        bytes32 indexed questionId,
-        address indexed creator,
-        address resolver,
+        MarketType indexed marketType,
+        address indexed resolver,
         uint64 closeTime,
-        bool usesOracle,
-        uint16 protocolFeeBps,
-        uint16 creatorFeeBps,
-        string metadataURI
+        bytes32 metadataHash
     );
 
-    event MarketOracleConfigured(
+    event MarketResolved(
         uint32 indexed marketId,
-        bytes32 indexed conditionType,
-        bytes32 dataFeedIdHash,
-        int256 targetValue,
-        string targetDescription
+        Outcome outcome,
+        uint128 payoutPool,
+        uint128 totalWinningStake,
+        bytes resolverContext
     );
-
-    event MarketClosed(uint32 indexed marketId);
-    event MarketResolved(uint32 indexed marketId, Outcome outcome, uint128 payoutPool, uint128 totalWinningStake);
     event MarketVoided(uint32 indexed marketId);
-    event MarketResolverUpdated(uint32 indexed marketId, address indexed newResolver);
-    event MarketMetadataUpdated(uint32 indexed marketId, string newMetadataURI);
-    event StakePlaced(uint32 indexed marketId, address indexed user, Outcome outcome, uint256 amount);
-    event StakeClaimed(uint32 indexed marketId, address indexed user, uint256 payout, bool wasVoid);
+    event StakePlaced(uint32 indexed marketId, address indexed account, Outcome outcome, uint256 amount);
+    event StakeClaimed(uint32 indexed marketId, address indexed account, uint256 payout, bool wasVoid);
 
     // ---------------------------------------------------------------------
     // Errors
     // ---------------------------------------------------------------------
 
-    error InvalidFee();
-    error InvalidResolver();
+    error InvalidAddress();
     error InvalidCloseTime();
-    error MarketClosedOrResolved();
+    error InvalidFees();
+    error InvalidMarketType();
+    error InvalidOutcome();
+    error InvalidResolver();
+    error MarketNotLive();
     error MarketTradingClosed();
-    error MarketNotReadyForResolution();
+    error MarketNotReady();
     error MarketAlreadyResolved();
     error MarketNotResolved();
-    error MarketNotVoid();
     error NothingToClaim();
-    error OutcomeRequired();
-    error UnauthorizedResolver();
-    error UnauthorizedCreator();
-    error UnauthorizedCloser();
-    error UnauthorizedCaller();
     error ZeroAmount();
-    error OracleConditionRequired();
+    error OnlyResolver();
+    error InvalidExtraData();
 
     // ---------------------------------------------------------------------
     // Constructor
     // ---------------------------------------------------------------------
 
-    constructor(IERC20 token, address treasuryAddress) {
-        if (treasuryAddress == address(0)) revert InvalidResolver();
-        stakingToken = token;
-        treasury = treasuryAddress;
+    constructor(IERC20 stakingToken_, address treasury_) {
+        if (address(stakingToken_) == address(0) || treasury_ == address(0)) revert InvalidAddress();
+        stakingToken = stakingToken_;
+        treasury = treasury_;
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(GUARDIAN_ROLE, msg.sender);
@@ -168,11 +163,11 @@ contract ConvexMarketManager is AccessControl, Pausable, ReentrancyGuard {
     }
 
     // ---------------------------------------------------------------------
-    // Admin actions
+    // Admin
     // ---------------------------------------------------------------------
 
     function setTreasury(address newTreasury) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (newTreasury == address(0)) revert InvalidResolver();
+        if (newTreasury == address(0)) revert InvalidAddress();
         treasury = newTreasury;
     }
 
@@ -188,20 +183,18 @@ contract ConvexMarketManager is AccessControl, Pausable, ReentrancyGuard {
     // Market lifecycle
     // ---------------------------------------------------------------------
 
-    function createMarket(CreateMarketParams calldata params) external whenNotPaused returns (uint32 marketId) {
-        if (!hasRole(CREATOR_ROLE, msg.sender)) revert UnauthorizedCreator();
+    function createMarket(CreateMarketParams calldata params) external whenNotPaused onlyRole(CREATOR_ROLE) returns (uint32) {
         if (params.closeTime <= block.timestamp) revert InvalidCloseTime();
-        if (params.protocolFeeBps > MAX_PROTOCOL_FEE_BPS || params.creatorFeeBps > MAX_CREATOR_FEE_BPS) {
-            revert InvalidFee();
-        }
         if (params.resolver == address(0)) revert InvalidResolver();
-        if (params.usesOracle && params.condition.conditionType == bytes32(0)) revert OracleConditionRequired();
+        if (params.protocolFeeBps > MAX_PROTOCOL_FEE_BPS || params.creatorFeeBps > MAX_CREATOR_FEE_BPS) {
+            revert InvalidFees();
+        }
 
-        marketId = nextMarketId++;
-
+        uint32 marketId = nextMarketId++;
         markets[marketId] = Market({
-            questionId: params.questionId,
-            metadataURI: params.metadataURI,
+            marketType: params.marketType,
+            status: MarketStatus.Live,
+            winningOutcome: Outcome.Undefined,
             creator: msg.sender,
             resolver: params.resolver,
             closeTime: params.closeTime,
@@ -212,81 +205,38 @@ contract ConvexMarketManager is AccessControl, Pausable, ReentrancyGuard {
             noPool: 0,
             payoutPool: 0,
             totalWinningStake: 0,
-            status: MarketStatus.Live,
-            winningOutcome: Outcome.Undefined,
-            usesOracle: params.usesOracle
+            metadataHash: params.metadataHash
         });
+        _applyMarketConfig(marketId, params);
 
-        if (params.usesOracle) {
-            _oracleConditions[marketId] = OracleCondition({
-                conditionType: params.condition.conditionType,
-                dataFeedId: params.condition.dataFeedId,
-                targetValue: params.condition.targetValue,
-                targetDescription: params.condition.targetDescription,
-                extraData: params.condition.extraData
-            });
+        emit MarketCreated(marketId, params.marketType, params.resolver, params.closeTime, params.metadataHash);
+        return marketId;
+    }
 
-            emit MarketOracleConfigured(
-                marketId,
-                params.condition.conditionType,
-                keccak256(bytes(params.condition.dataFeedId)),
-                params.condition.targetValue,
-                params.condition.targetDescription
-            );
+    function _applyMarketConfig(uint32, CreateMarketParams calldata params) private pure {
+        // Currently no additional on-chain config is required beyond metadataHash.
+        // This hook exists to keep the constructor stable if we extend config later.
+        if (params.marketType != MarketType.Price && params.marketType != MarketType.Sports) {
+            revert InvalidMarketType();
         }
-
-        emit MarketCreated(
-            marketId,
-            params.questionId,
-            msg.sender,
-            params.resolver,
-            params.closeTime,
-            params.usesOracle,
-            params.protocolFeeBps,
-            params.creatorFeeBps,
-            params.metadataURI
-        );
-    }
-
-    function closeMarket(uint32 marketId) external {
-        Market storage market = markets[marketId];
-        if (market.status != MarketStatus.Live) revert MarketClosedOrResolved();
-        if (msg.sender != market.creator && !hasRole(GUARDIAN_ROLE, msg.sender)) revert UnauthorizedCloser();
-        market.status = MarketStatus.Closed;
-        emit MarketClosed(marketId);
-    }
-
-    function updateResolver(uint32 marketId, address newResolver) external {
-        if (newResolver == address(0)) revert InvalidResolver();
-        Market storage market = markets[marketId];
-        if (msg.sender != market.creator && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) revert UnauthorizedCaller();
-        market.resolver = newResolver;
-        emit MarketResolverUpdated(marketId, newResolver);
-    }
-
-    function updateMetadata(uint32 marketId, string calldata newMetadataURI) external {
-        Market storage market = markets[marketId];
-        if (msg.sender != market.creator && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) revert UnauthorizedCaller();
-        market.metadataURI = newMetadataURI;
-        emit MarketMetadataUpdated(marketId, newMetadataURI);
     }
 
     // ---------------------------------------------------------------------
     // Staking
     // ---------------------------------------------------------------------
 
-    function stake(uint32 marketId, Outcome outcome, uint128 amount) external whenNotPaused nonReentrant {
+    function stake(uint32 marketId, Outcome side, uint128 amount) external whenNotPaused nonReentrant {
         if (amount == 0) revert ZeroAmount();
-        if (outcome == Outcome.Undefined) revert OutcomeRequired();
+        if (side == Outcome.Undefined) revert InvalidOutcome();
 
         Market storage market = markets[marketId];
-        if (market.status != MarketStatus.Live) revert MarketClosedOrResolved();
+        if (market.status != MarketStatus.Live) revert MarketNotLive();
         if (block.timestamp >= market.closeTime) revert MarketTradingClosed();
 
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
-
         Position storage position = _positions[marketId][msg.sender];
-        if (outcome == Outcome.Yes) {
+
+        if (side == Outcome.Yes) {
             position.yesStake += amount;
             market.yesPool += amount;
         } else {
@@ -294,7 +244,7 @@ contract ConvexMarketManager is AccessControl, Pausable, ReentrancyGuard {
             market.noPool += amount;
         }
 
-        emit StakePlaced(marketId, msg.sender, outcome, amount);
+        emit StakePlaced(marketId, msg.sender, side, amount);
     }
 
     // ---------------------------------------------------------------------
@@ -302,20 +252,20 @@ contract ConvexMarketManager is AccessControl, Pausable, ReentrancyGuard {
     // ---------------------------------------------------------------------
 
     function resolveMarket(uint32 marketId, Outcome outcome) external whenNotPaused {
-        if (outcome == Outcome.Undefined) revert OutcomeRequired();
+        if (outcome == Outcome.Undefined) revert InvalidOutcome();
 
         Market storage market = markets[marketId];
         if (market.status == MarketStatus.Resolved) revert MarketAlreadyResolved();
-        if (block.timestamp < market.closeTime) revert MarketNotReadyForResolution();
-        if (msg.sender != market.resolver && !hasRole(RESOLVER_ROLE, msg.sender)) revert UnauthorizedResolver();
-        if (market.usesOracle && _oracleConditions[marketId].conditionType == bytes32(0)) {
-            revert OracleConditionRequired();
+        if (block.timestamp < market.closeTime) revert MarketNotReady();
+        
+        // Allow resolver role OR the assigned resolver address
+        if (msg.sender != market.resolver && !hasRole(RESOLVER_ROLE, msg.sender)) {
+            revert OnlyResolver();
         }
 
         uint128 yesPool = market.yesPool;
         uint128 noPool = market.noPool;
         uint128 totalPool = yesPool + noPool;
-
         market.resolveTime = uint64(block.timestamp);
 
         if (totalPool == 0) {
@@ -349,7 +299,58 @@ contract ConvexMarketManager is AccessControl, Pausable, ReentrancyGuard {
             stakingToken.safeTransfer(market.creator, creatorFee);
         }
 
-        emit MarketResolved(marketId, outcome, uint128(payoutPool), winningStake);
+        emit MarketResolved(marketId, outcome, uint128(payoutPool), winningStake, "");
+    }
+
+    function finalizeFromResolver(
+        uint32 marketId,
+        Outcome outcome,
+        bytes calldata resolverContext
+    ) external whenNotPaused {
+        if (outcome == Outcome.Undefined) revert InvalidOutcome();
+
+        Market storage market = markets[marketId];
+        if (market.status == MarketStatus.Resolved) revert MarketAlreadyResolved();
+        if (block.timestamp < market.closeTime) revert MarketNotReady();
+        if (msg.sender != market.resolver) revert OnlyResolver();
+
+        uint128 yesPool = market.yesPool;
+        uint128 noPool = market.noPool;
+        uint128 totalPool = yesPool + noPool;
+        market.resolveTime = uint64(block.timestamp);
+
+        if (totalPool == 0) {
+            market.status = MarketStatus.Void;
+            market.winningOutcome = Outcome.Undefined;
+            emit MarketVoided(marketId);
+            return;
+        }
+
+        uint128 winningStake = outcome == Outcome.Yes ? yesPool : noPool;
+        if (winningStake == 0) {
+            market.status = MarketStatus.Void;
+            market.winningOutcome = Outcome.Undefined;
+            emit MarketVoided(marketId);
+            return;
+        }
+
+        uint256 protocolFee = (uint256(totalPool) * market.protocolFeeBps) / BPS_DENOMINATOR;
+        uint256 creatorFee = (uint256(totalPool) * market.creatorFeeBps) / BPS_DENOMINATOR;
+        uint256 payoutPool = uint256(totalPool) - protocolFee - creatorFee;
+
+        market.status = MarketStatus.Resolved;
+        market.winningOutcome = outcome;
+        market.payoutPool = uint128(payoutPool);
+        market.totalWinningStake = winningStake;
+
+        if (protocolFee > 0) {
+            stakingToken.safeTransfer(treasury, protocolFee);
+        }
+        if (creatorFee > 0) {
+            stakingToken.safeTransfer(market.creator, creatorFee);
+        }
+
+        emit MarketResolved(marketId, outcome, uint128(payoutPool), winningStake, resolverContext);
     }
 
     // ---------------------------------------------------------------------
@@ -358,7 +359,7 @@ contract ConvexMarketManager is AccessControl, Pausable, ReentrancyGuard {
 
     function claim(uint32 marketId) external nonReentrant {
         Market storage market = markets[marketId];
-        if (market.status == MarketStatus.Live || market.status == MarketStatus.Closed) revert MarketNotResolved();
+        if (market.status == MarketStatus.Live || market.status == MarketStatus.Resolving) revert MarketNotResolved();
 
         Position storage position = _positions[marketId][msg.sender];
         uint256 payout;
@@ -375,8 +376,11 @@ contract ConvexMarketManager is AccessControl, Pausable, ReentrancyGuard {
             uint128 userStake = winningOutcome == Outcome.Yes ? position.yesStake : position.noStake;
             if (userStake == 0) revert NothingToClaim();
 
-            position.yesStake = winningOutcome == Outcome.Yes ? 0 : position.yesStake;
-            position.noStake = winningOutcome == Outcome.No ? 0 : position.noStake;
+            if (winningOutcome == Outcome.Yes) {
+                position.yesStake = 0;
+            } else {
+                position.noStake = 0;
+            }
 
             payout = (uint256(userStake) * market.payoutPool) / market.totalWinningStake;
         }
@@ -386,23 +390,17 @@ contract ConvexMarketManager is AccessControl, Pausable, ReentrancyGuard {
     }
 
     // ---------------------------------------------------------------------
-    // View helpers
+    // Views
     // ---------------------------------------------------------------------
 
-    function positionOf(uint32 marketId, address user) external view returns (uint128 yesStake, uint128 noStake) {
-        Position storage position = _positions[marketId][user];
+    function positionOf(uint32 marketId, address account) external view returns (uint128 yesStake, uint128 noStake) {
+        Position storage position = _positions[marketId][account];
         yesStake = position.yesStake;
         noStake = position.noStake;
     }
 
-    function marketPools(uint32 marketId) external view returns (uint128 yesPool, uint128 noPool) {
-        Market storage market = markets[marketId];
-        yesPool = market.yesPool;
-        noPool = market.noPool;
-    }
-
-    function getOracleCondition(uint32 marketId) external view returns (OracleCondition memory) {
-        return _oracleConditions[marketId];
+    function getMarket(uint32 marketId) external view returns (Market memory) {
+        return markets[marketId];
     }
 }
 

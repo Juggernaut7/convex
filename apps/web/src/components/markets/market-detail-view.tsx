@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, Clock3, Share2, TrendingUp } from "lucide-react";
+import { useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi";
 
 import { Button } from "@/components/ui/button";
 import { MarketCard } from "@/components/markets/market-card";
@@ -10,6 +12,7 @@ import { StakeSheet } from "@/components/markets/stake-sheet";
 import { MarketViewModel } from "@/types/market";
 import { ClaimButton } from "@/components/markets/claim-button";
 import { formatNumber } from "@/lib/number";
+import { CONVEX_MANAGER_ADDRESS, convexManagerAbi } from "@/lib/contracts/convex-manager";
 
 type MarketDetailViewProps = {
   market: MarketViewModel;
@@ -18,6 +21,36 @@ type MarketDetailViewProps = {
 export function MarketDetailView({ market }: MarketDetailViewProps) {
   const [choice, setChoice] = useState<"yes" | "no" | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const router = useRouter();
+  const { address, isConnected } = useAccount();
+  const { writeContract, data: resolveHash, isPending: isResolving } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess: isResolved } = useWaitForTransactionReceipt({ hash: resolveHash });
+
+  // Refresh page data after successful resolution
+  useEffect(() => {
+    if (isResolved) {
+      router.refresh();
+    }
+  }, [isResolved, router]);
+
+  // Check if the connected address is the resolver for this specific market
+  const isMarketResolver = useMemo(() => {
+    if (!isConnected || !address || !market.resolver) {
+      return false;
+    }
+    return address.toLowerCase() === market.resolver.toLowerCase();
+  }, [address, isConnected, market.resolver]);
+
+  const handleResolve = (outcome: "yes" | "no") => {
+    if (!market.onChainMarketId) return;
+    const outcomeEnum = outcome === "yes" ? 1 : 2; // Outcome.Yes = 1, Outcome.No = 2
+    writeContract({
+      address: CONVEX_MANAGER_ADDRESS,
+      abi: convexManagerAbi,
+      functionName: "resolveMarket",
+      args: [BigInt(market.onChainMarketId), outcomeEnum],
+    });
+  };
 
   return (
     <>
@@ -97,6 +130,55 @@ export function MarketDetailView({ market }: MarketDetailViewProps) {
               setIsSheetOpen(true);
             }}
           />
+          {isMarketResolver && (
+            <>
+              {market.status === "Resolved" || market.status === "Void" ? (
+                <div className="rounded-3xl border-2 border-[#D1D5DB] bg-[#F9FAFB] p-6">
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-[#6B7280] mb-3">
+                    Market Resolved
+                  </h3>
+                  <p className="text-sm text-[#4B5563] mb-2">
+                    This market has been resolved.
+                  </p>
+                  {market.winningOutcome && (
+                    <p className="text-sm font-semibold text-[#111827]">
+                      Winning outcome: <span className="text-[#35D07F]">{market.winningOutcome.toUpperCase()}</span>
+                    </p>
+                  )}
+                  {market.status === "Void" && (
+                    <p className="text-sm font-semibold text-[#DC2626] mt-2">
+                      Market was voided
+                    </p>
+                  )}
+                </div>
+              ) : market.resolverState.canResolve && market.status === "Live" ? (
+                <div className="rounded-3xl border-2 border-[#35D07F] bg-[#E9F7EF] p-6">
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-[#217756] mb-3">
+                    Resolver Controls
+                  </h3>
+                  <p className="text-xs text-[#6B7280] mb-4">
+                    This market has ended. As the resolver, you can now resolve it to distribute the pool.
+                  </p>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => handleResolve("yes")}
+                      disabled={isResolving || isConfirming || market.status !== "Live"}
+                      className="flex-1 rounded-xl bg-[#35D07F] text-sm font-semibold text-white hover:bg-[#29b46e] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isResolving || isConfirming ? "Resolving..." : "Resolve YES"}
+                    </Button>
+                    <Button
+                      onClick={() => handleResolve("no")}
+                      disabled={isResolving || isConfirming || market.status !== "Live"}
+                      className="flex-1 rounded-xl bg-[#DC2626] text-sm font-semibold text-white hover:bg-[#B91C1C] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isResolving || isConfirming ? "Resolving..." : "Resolve NO"}
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+            </>
+          )}
           <ClaimButton market={market} />
           <div className="rounded-3xl border border-[#E5E7EB] bg-white p-6 shadow-sm sm:p-8">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-[#6B7280]">

@@ -88,6 +88,22 @@ export function ClaimButton({ market, className, onClaimed }: ClaimButtonProps) 
         chain: walletClient.chain ?? publicClient.chain,
       });
       await publicClient.waitForTransactionReceipt({ hash });
+      
+      // Refetch position after successful claim to update UI
+      if (address && publicClient && market.onChainMarketId) {
+        try {
+          const response = (await publicClient.readContract({
+            address: MANAGER_CONTRACT_ADDRESS,
+            abi: convexManagerAbi,
+            functionName: "positionOf",
+            args: [BigInt(market.onChainMarketId), address],
+          })) as [bigint, bigint];
+          setPosition({ yesStake: response[0], noStake: response[1] });
+        } catch (error) {
+          console.error("Failed to refetch position after claim", error);
+        }
+      }
+      
       onClaimed?.();
     } catch (error) {
       console.error("Claim failed", error);
@@ -97,14 +113,14 @@ export function ClaimButton({ market, className, onClaimed }: ClaimButtonProps) 
     }
   };
 
-  if (!canClaim) {
+  if (!canClaim || !hasClaimable) {
     return null;
   }
 
   return (
     <div className={className}>
       <Button
-        disabled={!hasClaimable || isLoading}
+        disabled={isLoading}
         onClick={handleClaim}
         className="w-full rounded-2xl bg-[#35D07F] text-sm font-semibold text-white hover:bg-[#29b46e] disabled:cursor-not-allowed disabled:opacity-60"
       >

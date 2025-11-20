@@ -1,38 +1,37 @@
-import { config as loadEnv } from "dotenv";
-import { z } from "zod";
+import "dotenv/config";
 
-loadEnv();
+export const env = {
+  port: Number(process.env.PORT ?? 4000),
+  nodeEnv: process.env.NODE_ENV ?? "development",
 
-const envSchema = z.object({
-  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
-  PORT: z.coerce.number().int().positive().default(4000),
-  MONGO_URI: z.string().url(),
-  JWT_SECRET: z.string().min(32),
-  JWT_EXPIRES_IN: z.string().default("1d"),
-  RESOLVER_PRIVATE_KEY: z.string().regex(/^0x[a-fA-F0-9]{64}$/, "resolver key must be 32-byte hex prefixed by 0x"),
-  RPC_URL: z.string().url(),
-  MANAGER_CONTRACT_ADDRESS: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "invalid contract address"),
-  DEFAULT_MARKET_THRESHOLD: z.coerce.number().positive().default(4000),
-  COINGECKO_API_KEY: z.string().optional(),
-  SPORTS_API_KEY: z.string().optional(),
-  ORACLE_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(60_000),
-  ORACLE_MAX_RETRIES: z.coerce.number().int().positive().default(5),
-  ALLOW_SELF_SIGNED_CERTS: z
-    .union([z.literal("true"), z.literal("false"), z.boolean()])
-    .optional()
-    .transform((value) => {
-      if (typeof value === "boolean") return value;
-      if (value === undefined) return false;
-      return value === "true";
-    })
-});
+  mongoUri: process.env.MONGO_URI ?? "",
 
-const parsed = envSchema.safeParse(process.env);
+  rpcUrl: process.env.RPC_URL ?? "",
+  chainId: Number(process.env.CHAIN_ID ?? "0"),
+  managerAddress: process.env.MANAGER_CONTRACT_ADDRESS ?? "",
 
-if (!parsed.success) {
-  console.error("❌ Invalid environment variables", parsed.error.flatten().fieldErrors);
-  process.exit(1);
+  resolverPrivateKey: process.env.RESOLVER_PRIVATE_KEY ?? "",
+
+  coingeckoApiUrl:
+    process.env.COINGECKO_API_URL ??
+    "https://api.coingecko.com/api/v3/simple/price",
+
+  sportsApiUrl: process.env.SPORTS_API_URL ?? "",
+  sportsApiKey: process.env.SPORTS_API_KEY ?? "",
+
+  oraclePollIntervalMs: Number(process.env.ORACLE_POLL_INTERVAL_MS ?? "60000"),
+  oracleMaxRetries: Number(process.env.ORACLE_MAX_RETRIES ?? "5"),
+  oracleCacheTtlSeconds: Number(
+    process.env.ORACLE_CACHE_TTL_SECONDS ?? "60"
+  ),
+};
+
+export function validateEnv() {
+  if (!env.mongoUri) {
+    throw new Error("MONGO_URI is required");
+  }
+  // Other fields (RPC_URL, CHAIN_ID, MANAGER_CONTRACT_ADDRESS, RESOLVER_PRIVATE_KEY, SPORTS_API_URL)
+  // are optional for now and only required when actually resolving on-chain.
 }
 
-export const env = parsed.data;
 

@@ -14,19 +14,28 @@ type MarketCardProps = {
 };
 
 export function MarketCard({ market, onStake, compact = false }: MarketCardProps) {
+  const isEnded = market.status === "Closed" || market.status === "Resolved" || market.status === "Void";
+  
   return (
     <article className="flex h-full flex-col rounded-3xl border border-[#E5E7EB] bg-[#F9FAFB] p-5 transition hover:border-[#35D07F]/60 hover:shadow-md">
       <div className="space-y-3">
-        <Link href={`/market/${market.id}`} className="block">
-          <p className="text-base font-semibold text-[#0F172A] sm:text-lg">{market.title}</p>
-        </Link>
+        <div className="flex items-start justify-between gap-2">
+          <Link href={`/market/${market.id}`} className="block flex-1">
+            <p className="text-base font-semibold text-[#0F172A] sm:text-lg">{market.title}</p>
+          </Link>
+          {isEnded && (
+            <span className="inline-flex items-center rounded-full bg-[#FEE2E2] px-2.5 py-1 text-xs font-semibold text-[#DC2626]">
+              Ended
+            </span>
+          )}
+        </div>
         {!compact && market.description && (
           <p className="text-sm text-[#4B5563]">{market.description}</p>
         )}
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#4B5563]">
           <span className="inline-flex items-center gap-1">
             <Clock3 className="h-4 w-4 text-[#35D07F]" />
-            Closes in {market.closesIn}
+            {isEnded ? "Ended" : `Closes in ${market.closesIn}`}
           </span>
           <span className="inline-flex items-center gap-1 font-medium">
             <TrendingUp className="h-4 w-4 text-[#35D07F]" />

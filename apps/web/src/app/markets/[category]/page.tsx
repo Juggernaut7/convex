@@ -7,6 +7,7 @@ import { MarketGallery } from "@/components/markets/market-gallery";
 import { Button } from "@/components/ui/button";
 import { MarketCategory } from "@/types/market";
 import { fetchMarkets } from "@/lib/api/markets";
+import { getTrendingMarkets } from "@/lib/markets/trending";
 
 const categoryMap: Record<string, MarketCategory> = {
   sports: "Sports",
@@ -29,6 +30,7 @@ export default async function CategoryMarketsPage({ params }: CategoryMarketsPag
 
   const markets = await fetchMarkets();
   const filteredMarkets = markets.filter((market) => market.category === category);
+  const trendingMarkets = getTrendingMarkets(filteredMarkets, 3);
   const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
 
   return (
@@ -61,7 +63,7 @@ export default async function CategoryMarketsPage({ params }: CategoryMarketsPag
           markets={filteredMarkets}
           initialCategory={category}
           enableCategoryFilter={false}
-          trendingMarkets={filteredMarkets.slice(0, 3)}
+          trendingMarkets={trendingMarkets}
         />
       </Container>
     </main>

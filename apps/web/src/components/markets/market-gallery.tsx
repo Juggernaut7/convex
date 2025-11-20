@@ -32,12 +32,18 @@ export function MarketGallery({
     : [];
 
   const filteredMarkets = useMemo(() => {
-    return markets.filter((market) => {
+    const filtered = markets.filter((market) => {
       const matchesCategory = activeCategory === "All" || market.category === activeCategory;
       const matchesSearch =
         market.title.toLowerCase().includes(search.toLowerCase()) ||
         market.description?.toLowerCase().includes(search.toLowerCase());
       return matchesCategory && matchesSearch;
+    });
+    
+    // Sort markets: Live first, then Closed/Resolved/Void at the bottom
+    return filtered.sort((a, b) => {
+      const statusOrder: Record<string, number> = { Live: 0, Closed: 1, Resolved: 2, Void: 3 };
+      return (statusOrder[a.status] ?? 999) - (statusOrder[b.status] ?? 999);
     });
   }, [activeCategory, markets, search]);
 

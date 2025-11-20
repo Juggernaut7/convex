@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 import { Container } from "@/components/layout/container";
@@ -36,5 +38,3 @@ export default function CreatePage() {
     </main>
   );
 }
-
-

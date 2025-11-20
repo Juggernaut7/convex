@@ -4,6 +4,9 @@ import { Container } from "@/components/layout/container";
 import { MarketDetailView } from "@/components/markets/market-detail-view";
 import { fetchMarketById } from "@/lib/api/markets";
 
+// Revalidate every 10 seconds to get fresh market data
+export const revalidate = 10;
+
 type MarketDetailPageProps = {
   params: { id: string };
 };

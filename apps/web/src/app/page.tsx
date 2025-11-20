@@ -6,11 +6,20 @@ import { MarketTabs } from "@/components/home/market-tabs";
 import { Container } from "@/components/layout/container";
 import { MarketCard } from "@/components/markets/market-card";
 import { fetchMarkets } from "@/lib/api/markets";
+import { getFeaturedMarkets, getTrendingMarkets } from "@/lib/markets/trending";
+
+// Revalidate every 10 seconds to get fresh market data
+export const revalidate = 10;
 
 export default async function Home() {
   const markets = await fetchMarkets();
-  const featuredMarkets = markets.slice(0, 3);
-  const liveMarkets = markets.filter((market) => market.status === "Live").slice(0, 6);
+
+  const featuredMarkets = getFeaturedMarkets(markets, 3);
+  const trendingMarkets = getTrendingMarkets(markets, 6);
+  const liveMarkets = markets
+    .filter((market) => market.status === "Live")
+    .sort((a, b) => b.totalPool - a.totalPool)
+    .slice(0, 6);
 
   return (
     <main className="bg-[#F5F7FA] pb-20 pt-12 sm:pt-16">
