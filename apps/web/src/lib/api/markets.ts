@@ -148,3 +148,27 @@ export type CreateMarketRequest = {
 export async function createMarket(_body: CreateMarketRequest): Promise<MarketViewModel> {
   throw new Error("Market creation must be done on-chain via wallet. Use the create market form.");
 }
+
+export async function resolveMarketRequest(marketId: string, outcome: OutcomeSide): Promise<void> {
+  if (!API_BASE_URL) {
+    throw new Error("API_BASE_URL not configured");
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/markets/${marketId}/resolve`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ outcome }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: "Resolution failed" }));
+      throw new Error(error.message || "Resolution failed");
+    }
+  } catch (error) {
+    console.error(`[resolveMarketRequest] Error resolving market ${marketId}:`, error);
+    throw error;
+  }
+}

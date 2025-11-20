@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BadgeCheck, Clock3, Loader2, TriangleAlert } from "lucide-react";
+import { AlertTriangle, BadgeCheck, Clock3, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { MarketViewModel, OutcomeSide } from "@/types/market";
@@ -196,7 +196,7 @@ export function ResolverMarketCard({ market, onResolve, refreshing = false }: Re
             {priceLoading && <Loader2 className="h-4 w-4 animate-spin text-[#35D07F]" />}
             {priceError && (
               <span className="inline-flex items-center gap-1 text-xs text-[#B91C1C]">
-                <TriangleAlert className="h-4 w-4" />
+                <AlertTriangle className="h-4 w-4" />
                 {priceError}
               </span>
             )}
