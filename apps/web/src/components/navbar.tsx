@@ -19,6 +19,7 @@ const navLinks = [
   { name: "Markets", href: "/markets" },
   { name: "Create", href: "/create" },
   { name: "Dashboard", href: "/dashboard" },
+  { name: "Leaderboard", href: "/leaderboard" },
   { name: "Docs", href: "https://docs.celo.org", external: true },
 ]
 
