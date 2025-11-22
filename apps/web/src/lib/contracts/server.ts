@@ -34,7 +34,7 @@ export async function getMarket(marketId: number) {
       address: CONVEX_MANAGER_ADDRESS,
       abi: convexManagerAbi,
       functionName: "markets",
-      args: [BigInt(marketId)],
+      args: [marketId],
     });
 
     if (!data) {
@@ -82,7 +82,7 @@ export async function getMarket(marketId: number) {
   }
 }
 
-export async function getAllMarkets(): Promise<ReturnType<typeof getMarket>[]> {
+export async function getAllMarkets(): Promise<Awaited<ReturnType<typeof getMarket>>[]> {
   try {
     const count = await getMarketCount();
     console.log(`[getAllMarkets] Found ${count} markets (nextMarketId)`);

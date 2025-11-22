@@ -244,9 +244,7 @@ export function ResolverMarketCard({ market, onResolve, refreshing = false }: Re
             isResolving ||
             !market.resolverState.canResolve ||
             !computedOutcome ||
-            market.status !== "Live" ||
-            market.status === "Resolved" ||
-            market.status === "Void"
+            market.status !== "Live"
           }
         >
           {isResolving ? (

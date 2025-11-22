@@ -36,12 +36,14 @@ export function ClaimButton({ market, className, onClaimed }: ClaimButtonProps) 
         return;
       }
       try {
-        const response = (await publicClient.readContract({
+        const marketId = market.onChainMarketId;
+        if (marketId === undefined) return;
+        const response = await publicClient.readContract({
           address: MANAGER_CONTRACT_ADDRESS,
           abi: convexManagerAbi,
           functionName: "positionOf",
-          args: [BigInt(market.onChainMarketId), address],
-        })) as [bigint, bigint];
+          args: [marketId, address],
+        }) as [bigint, bigint];
         if (!cancelled) {
           setPosition({ yesStake: response[0], noStake: response[1] });
         }
@@ -84,20 +86,21 @@ export function ClaimButton({ market, className, onClaimed }: ClaimButtonProps) 
         address: MANAGER_CONTRACT_ADDRESS,
         abi: convexManagerAbi,
         functionName: "claim",
-        args: [BigInt(market.onChainMarketId)],
+        args: [market.onChainMarketId],
         chain: walletClient.chain ?? publicClient.chain,
       });
       await publicClient.waitForTransactionReceipt({ hash });
       
       // Refetch position after successful claim to update UI
-      if (address && publicClient && market.onChainMarketId) {
+      if (address && publicClient && market.onChainMarketId !== undefined) {
         try {
-          const response = (await publicClient.readContract({
+          const marketId = market.onChainMarketId;
+          const response = await publicClient.readContract({
             address: MANAGER_CONTRACT_ADDRESS,
             abi: convexManagerAbi,
             functionName: "positionOf",
-            args: [BigInt(market.onChainMarketId), address],
-          })) as [bigint, bigint];
+            args: [marketId, address],
+          }) as [bigint, bigint];
           setPosition({ yesStake: response[0], noStake: response[1] });
         } catch (error) {
           console.error("Failed to refetch position after claim", error);

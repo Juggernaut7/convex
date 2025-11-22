@@ -46,7 +46,7 @@ export function useLivePrice(assetId?: string, options: UseLivePriceOptions = {}
         }
 
         const data = (await response.json()) as Record<string, { usd: number }>;
-        const price = data[assetId]?.usd;
+        const price = assetId ? data[assetId]?.usd : undefined;
 
         if (isMounted) {
           setState({

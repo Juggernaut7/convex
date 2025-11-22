@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import { createMarketMetadata, findMarketByOnChainId } from "../markets/market.service";
 import { logger } from "../config/logger";
 
@@ -39,7 +40,7 @@ router.post("/metadata", async (req, res) => {
     res.json({
       success: true,
       market: {
-        id: market._id.toString(),
+        id: (market._id as mongoose.Types.ObjectId).toString(),
         onChainId: market.onChainId,
         title: market.title,
         description: market.description,
@@ -66,7 +67,7 @@ router.get("/metadata/:onChainId", async (req, res) => {
     }
 
     res.json({
-      id: market._id.toString(),
+      id: (market._id as mongoose.Types.ObjectId).toString(),
       onChainId: market.onChainId,
       title: market.title,
       description: market.description,

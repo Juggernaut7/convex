@@ -48,7 +48,7 @@ export function useUserPositions() {
       address: CONVEX_MANAGER_ADDRESS,
       abi: convexManagerAbi,
       functionName: "positionOf" as const,
-      args: [BigInt(market.onChainMarketId || 0), address] as const,
+      args: [(market.onChainMarketId || 0), address] as const,
     }));
   }, [address, markets]);
 
@@ -68,9 +68,9 @@ export function useUserPositions() {
 
     markets.forEach((market, index) => {
       const positionResult = positionsData[index];
-      if (!positionResult?.data) return;
+      if (!positionResult?.result) return;
 
-      const [yesStake, noStake] = positionResult.data as [bigint, bigint];
+      const [yesStake, noStake] = positionResult.result as [bigint, bigint];
       const totalStake = yesStake + noStake;
 
       // Only include markets where user has a stake

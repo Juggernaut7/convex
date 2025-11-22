@@ -104,7 +104,7 @@ export async function fetchOnChainMarket(
       address: MANAGER_CONTRACT_ADDRESS,
       abi: convexManagerAbi,
       functionName: "markets",
-      args: [BigInt(marketId)],
+      args: [marketId],
     });
     return decodeMarketStruct(result);
   } catch (error) {
@@ -122,7 +122,7 @@ export async function fetchUserPosition(
     address: MANAGER_CONTRACT_ADDRESS,
     abi: convexManagerAbi,
     functionName: "positionOf",
-    args: [BigInt(marketId), user],
+    args: [marketId, user],
   })) as [bigint, bigint];
 
   return {
@@ -149,7 +149,11 @@ export async function ensureAllowance(
     return;
   }
 
+  if (!walletClient.account) {
+    throw new Error("Wallet account not available");
+  }
   const hash = await walletClient.writeContract({
+    account: walletClient.account,
     address: STAKING_TOKEN_ADDRESS,
     abi: erc20Abi,
     functionName: "approve",
@@ -175,11 +179,15 @@ export async function stakeOnMarket(
   await ensureAllowance(walletClient, publicClient, account, MANAGER_CONTRACT_ADDRESS, amount);
 
   const outcomeEnum = outcome === "yes" ? 1 : 2;
+  if (!walletClient.account) {
+    throw new Error("Wallet account not available");
+  }
   const hash = await walletClient.writeContract({
+    account: walletClient.account,
     address: MANAGER_CONTRACT_ADDRESS,
     abi: convexManagerAbi,
     functionName: "stake",
-    args: [BigInt(marketId), outcomeEnum, amount],
+    args: [marketId, outcomeEnum, amount],
     chain: celoSepolia,
   });
 
@@ -193,11 +201,15 @@ export async function claimWinnings(
   publicClient: PublicClient,
   marketId: number
 ) {
+  if (!walletClient.account) {
+    throw new Error("Wallet account not available");
+  }
   const hash = await walletClient.writeContract({
+    account: walletClient.account,
     address: MANAGER_CONTRACT_ADDRESS,
     abi: convexManagerAbi,
     functionName: "claim",
-    args: [BigInt(marketId)],
+    args: [marketId],
     chain: celoSepolia,
   });
 

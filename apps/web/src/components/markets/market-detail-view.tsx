@@ -48,7 +48,7 @@ export function MarketDetailView({ market }: MarketDetailViewProps) {
       address: CONVEX_MANAGER_ADDRESS,
       abi: convexManagerAbi,
       functionName: "resolveMarket",
-      args: [BigInt(market.onChainMarketId), outcomeEnum],
+      args: [market.onChainMarketId, outcomeEnum],
     });
   };
 

@@ -90,7 +90,7 @@ contract ConvexMarketManager is AccessControl, Pausable, ReentrancyGuard {
         uint16 creatorFeeBps;
         bytes32 metadataHash;
         // extraData slot reserved for future extensions (not used by core logic)
-        bytes extraData
+        bytes extraData;
     }
 
     // ---------------------------------------------------------------------

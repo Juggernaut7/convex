@@ -1,7 +1,8 @@
 "use client";
 
 import { useReadContract, useReadContracts, useWatchContractEvent } from "wagmi";
-import { CONVEX_MANAGER_ADDRESS, convexManagerAbi, MarketType, MarketStatus, Outcome, type Address } from "@/lib/contracts/convex-manager";
+import { CONVEX_MANAGER_ADDRESS, convexManagerAbi, MarketType, MarketStatus, Outcome } from "@/lib/contracts/convex-manager";
+import type { Address } from "viem";
 import { useMemo } from "react";
 
 export function useMarketCount() {
@@ -17,7 +18,7 @@ export function useMarket(marketId: number | undefined) {
     address: CONVEX_MANAGER_ADDRESS,
     abi: convexManagerAbi,
     functionName: "markets",
-    args: marketId !== undefined ? [BigInt(marketId)] : undefined,
+    args: marketId !== undefined ? [marketId] : undefined,
     query: {
       enabled: marketId !== undefined,
     },
@@ -91,7 +92,7 @@ export function useMarkets(count: number) {
 
     const markets = data
       .map((result, index) => {
-        if (!result.data) return null;
+        if (!result.result) return null;
         const [
           marketType,
           status,
@@ -107,7 +108,7 @@ export function useMarkets(count: number) {
           payoutPool,
           totalWinningStake,
           metadataHash,
-        ] = result.data;
+        ] = result.result;
 
         return {
           marketId: index,
@@ -138,7 +139,7 @@ export function usePosition(marketId: number | undefined, account: Address | und
     address: CONVEX_MANAGER_ADDRESS,
     abi: convexManagerAbi,
     functionName: "positionOf",
-    args: marketId !== undefined && account ? [BigInt(marketId), account] : undefined,
+    args: marketId !== undefined && account ? [marketId, account] : undefined,
     query: {
       enabled: marketId !== undefined && account !== undefined,
     },

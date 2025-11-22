@@ -12,13 +12,13 @@ import {
 } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import { cn } from "@/lib/utils";
-import type { Market, MarketCategory } from "@/types/market";
+import type { MarketViewModel, MarketCategory } from "@/types/market";
 
 import { MarketCard } from "./market-card";
 import { MarketFilterBar } from "./market-filter-bar";
 
 type MarketExplorerProps = {
-  markets: Market[];
+  markets: MarketViewModel[];
   categories: MarketCategory[];
   defaultCategory?: MarketCategory | "All";
   enableFiltersButton?: boolean;
@@ -26,7 +26,7 @@ type MarketExplorerProps = {
 };
 
 type Selection = {
-  market: Market;
+  market: MarketViewModel;
   choice: "yes" | "no";
 };
 
@@ -50,13 +50,13 @@ export function MarketExplorer({
       const matchesCategory = activeCategory === "All" || market.category === activeCategory;
       const matchesSearch =
         normalizedSearch.length === 0 ||
-        market.question.toLowerCase().includes(normalizedSearch) ||
+        market.title.toLowerCase().includes(normalizedSearch) ||
         (market.description?.toLowerCase().includes(normalizedSearch) ?? false);
       return matchesCategory && matchesSearch;
     });
   }, [activeCategory, markets, searchTerm]);
 
-  const handleSelect = (market: Market, choice: "yes" | "no") => {
+  const handleSelect = (market: MarketViewModel, choice: "yes" | "no") => {
     setSelection({ market, choice });
     setStakeValue("5");
     setIsSheetOpen(true);
@@ -64,7 +64,7 @@ export function MarketExplorer({
 
   const potentialReward =
     selection && stakeValue
-      ? (Number(stakeValue) * selection.market.multiplier[selection.choice]).toFixed(2)
+      ? (Number(stakeValue) * (selection.choice === "yes" ? selection.market.yesMultiplier : selection.market.noMultiplier)).toFixed(2)
       : null;
 
   return (
@@ -96,7 +96,7 @@ export function MarketExplorer({
           ) : (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {filteredMarkets.map((market) => (
-                <MarketCard key={market.id} market={market} onSelect={handleSelect} />
+                <MarketCard key={market.id} market={market} onStake={handleSelect} />
               ))}
             </div>
           )}
@@ -118,7 +118,7 @@ export function MarketExplorer({
                   Confirm your prediction
                 </SheetTitle>
                 <SheetDescription className="text-sm text-[#4B5563]">
-                  {selection.market.question}
+                  {selection.market.title}
                 </SheetDescription>
               </SheetHeader>
 
@@ -133,7 +133,7 @@ export function MarketExplorer({
                   <div className="mt-3 flex items-center justify-between">
                     <span>Multiplier</span>
                     <span className="font-semibold text-[#111827]">
-                      {selection.market.multiplier[selection.choice].toFixed(1)}x
+                      {(selection.choice === "yes" ? selection.market.yesMultiplier : selection.market.noMultiplier).toFixed(1)}x
                     </span>
                   </div>
                 </div>

@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { env } from "../config/env";
 import { logger } from "../config/logger";
 import {
@@ -27,6 +28,16 @@ export function startScheduler() {
 
       for (const market of pending) {
         try {
+          if (!market.asset) {
+            logger.warn({ onChainId: market.onChainId }, "Market missing asset, skipping");
+            continue;
+          }
+
+          if (!market.condition) {
+            logger.warn({ onChainId: market.onChainId }, "Market missing condition, skipping");
+            continue;
+          }
+
           const value =
             market.resolutionSource === "coingecko"
               ? (await getCoingeckoPrice(market.asset)).price
@@ -44,15 +55,17 @@ export function startScheduler() {
           });
 
           await resolveOnChain(market.onChainId, outcome);
-          await markMarketResolved(market._id.toString(), outcome);
+          const marketId = (market._id as mongoose.Types.ObjectId).toString();
+          await markMarketResolved(marketId, outcome);
 
           logger.info(
-            { marketId: market._id.toString(), onChainId: market.onChainId, outcome },
+            { marketId, onChainId: market.onChainId, outcome },
             "Market resolved successfully"
           );
         } catch (error) {
+          const marketId = (market._id as mongoose.Types.ObjectId).toString();
           logger.error(
-            { error, marketId: market._id.toString(), onChainId: market.onChainId },
+            { error, marketId, onChainId: market.onChainId },
             "Failed to resolve market"
           );
         }

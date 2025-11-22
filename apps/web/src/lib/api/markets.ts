@@ -114,8 +114,9 @@ export async function fetchMarkets(): Promise<MarketViewModel[]> {
   const markets = await getAllMarkets();
   const marketsWithMetadata = await Promise.all(
     markets.map(async (market) => {
+      if (!market) return null;
       const metadata = await fetchMarketMetadata(market.marketId);
-      return transformMarket(market, metadata);
+      return await transformMarket(market, metadata);
     })
   );
   return marketsWithMetadata.filter((m): m is MarketViewModel => m !== null);
