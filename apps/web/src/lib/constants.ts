@@ -43,8 +43,15 @@ export const API_BASE_URL = getEnv("NEXT_PUBLIC_API_BASE_URL", {
   defaultValue: "http://localhost:5000",
 });
 
-// Log API URL in development to help debug
-if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-  console.log("[API_BASE_URL] Using:", API_BASE_URL || "http://localhost:5000");
+// Log API URL to help debug (always log in browser to see what's being used)
+if (typeof window !== "undefined") {
+  const apiUrl = API_BASE_URL || "http://localhost:5000";
+  console.log(`[API_BASE_URL] Using: ${apiUrl}`);
+  if (apiUrl.includes("localhost") && window.location.hostname !== "localhost") {
+    console.warn(
+      "[API_BASE_URL] ⚠️ WARNING: Using localhost API URL on hosted site!",
+      "Set NEXT_PUBLIC_API_BASE_URL in Vercel environment variables."
+    );
+  }
 }
 
