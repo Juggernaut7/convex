@@ -7,12 +7,17 @@ export function createApp() {
   const app = express();
 
   const corsOptions: CorsOptions = {
-    origin: "*",
+    origin: "*", // Allow all origins
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+    exposedHeaders: ["Content-Length", "Content-Type"],
+    credentials: false, // Set to false when using origin: "*"
+    maxAge: 86400, // 24 hours
   };
 
+  // Apply CORS to all routes
   app.use(cors(corsOptions));
+  // Handle preflight requests
   app.options("*", cors(corsOptions));
   app.use(express.json());
 
