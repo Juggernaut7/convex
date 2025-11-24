@@ -43,3 +43,8 @@ export const API_BASE_URL = getEnv("NEXT_PUBLIC_API_BASE_URL", {
   defaultValue: "http://localhost:5000",
 });
 
+// Log API URL in development to help debug
+if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+  console.log("[API_BASE_URL] Using:", API_BASE_URL || "http://localhost:5000");
+}
+

@@ -2,10 +2,12 @@
 const nextConfig = {
   reactStrictMode: true,
   webpack: (config, { isServer }) => {
-    config.externals.push('pino-pretty', 'lokijs', 'encoding')
+    // External modules that shouldn't be bundled
+    config.externals.push('pino-pretty', 'lokijs', 'encoding');
     
-    // Ignore React Native modules that MetaMask SDK tries to import
+    // Ignore React Native modules that MetaMask SDK tries to import (client-side only)
     if (!isServer) {
+      config.externals.push('@react-native-async-storage/async-storage');
       config.resolve.fallback = {
         ...config.resolve.fallback,
         '@react-native-async-storage/async-storage': false,
