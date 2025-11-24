@@ -9,6 +9,14 @@ export function createApp() {
   app.use(cors());
   app.use(express.json());
 
+  app.get("/", (_req, res) => {
+    res.json({
+      name: "Convex Backend",
+      status: "ok",
+      endpoints: ["/health", "/api/markets"],
+    });
+  });
+
   app.get("/health", (_req, res) => {
     res.json({ ok: true });
   });
