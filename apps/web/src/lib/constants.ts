@@ -40,6 +40,6 @@ export const RESOLVER_ADDRESS = getEnv("NEXT_PUBLIC_RESOLVER_ADDRESS", {
 
 export const API_BASE_URL = getEnv("NEXT_PUBLIC_API_BASE_URL", {
   required: false,
-  defaultValue: "https://convex-q9pc.onrender.com",
+  defaultValue: "http://localhost:5000",
 });
 
