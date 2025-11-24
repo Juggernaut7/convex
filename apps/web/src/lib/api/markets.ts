@@ -101,7 +101,7 @@ async function fetchMarketMetadata(onChainId: number): Promise<{ title: string; 
     if (!response.ok) {
       if (response.status === 404) {
         // Market metadata not found - this is expected for markets created before metadata system
-        console.log(`[fetchMarketMetadata] Market ${onChainId} metadata not found (404)`);
+        // Silently return null - no need to log expected 404s
         return null;
       }
       console.warn(`[fetchMarketMetadata] API returned ${response.status} for market ${onChainId}`);
