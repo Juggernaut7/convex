@@ -84,6 +84,12 @@ async function fetchMarketMetadata(onChainId: number): Promise<{ title: string; 
     return null;
   }
 
+  // Log API URL on first call to help debug
+  if (typeof window !== "undefined" && !(window as any).__API_URL_LOGGED) {
+    console.log(`[fetchMarketMetadata] Using API_BASE_URL: ${API_BASE_URL}`);
+    (window as any).__API_URL_LOGGED = true;
+  }
+
   try {
     // Add timeout for Render cold starts (30 seconds)
     const controller = new AbortController();
