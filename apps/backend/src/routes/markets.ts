@@ -107,5 +107,32 @@ router.get("/metadata", async (_req, res) => {
   }
 });
 
+// Note: Market resolution is done directly on-chain via the resolver wallet
+// This endpoint is not used - resolution happens through smart contract calls
+// Keeping for potential future use or API consistency
+router.post("/:marketId/resolve", async (req, res) => {
+  try {
+    const { marketId } = req.params;
+    const { outcome } = req.body;
+
+    if (!outcome || !["yes", "no"].includes(outcome)) {
+      return res.status(400).json({ error: "Invalid outcome. Must be 'yes' or 'no'" });
+    }
+
+    logger.info({ marketId, outcome }, "Resolution request received (note: resolution is done on-chain)");
+    
+    // This endpoint is informational - actual resolution happens on-chain
+    res.json({
+      message: "Resolution should be done directly on-chain via smart contract",
+      marketId,
+      outcome,
+      note: "Use the resolver dashboard to resolve markets on-chain",
+    });
+  } catch (error) {
+    logger.error({ error }, "Error in resolve endpoint");
+    res.status(500).json({ error: "Failed to process resolution request" });
+  }
+});
+
 export default router;
 

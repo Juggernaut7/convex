@@ -20,7 +20,15 @@ export function createApp() {
     res.json({
       name: "Convex Backend",
       status: "ok",
-      endpoints: ["/health", "/api/markets"],
+      version: "1.0.0",
+      endpoints: {
+        health: "/health",
+        markets: {
+          "GET /api/markets/metadata": "List all markets metadata",
+          "GET /api/markets/metadata/:onChainId": "Get market metadata by on-chain ID",
+          "POST /api/markets/metadata": "Create market metadata",
+        },
+      },
     });
   });
 
