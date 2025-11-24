@@ -1,12 +1,19 @@
 import express from "express";
-import cors from "cors";
+import cors, { CorsOptions } from "cors";
 import { logger } from "./config/logger";
 import marketsRouter from "./routes/markets";
 
 export function createApp() {
   const app = express();
 
-  app.use(cors());
+  const corsOptions: CorsOptions = {
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  };
+
+  app.use(cors(corsOptions));
+  app.options("*", cors(corsOptions));
   app.use(express.json());
 
   app.get("/", (_req, res) => {

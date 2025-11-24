@@ -4,7 +4,9 @@
 
 A decentralized prediction market platform on Celo blockchain that transforms how you bet on outcomes. Create markets, stake your conviction, and earn rewards—all secured by smart contracts and powered by real-time oracles.
 
-🚀 **Live Demo** • 📡 **Backend API** • 🔗 **GitHub**
+🚀 **Live Demo**: [convex-seven.vercel.app](https://convex-seven.vercel.app/) •
+📡 **Backend API**: [convex-q9pc.onrender.com](https://convex-q9pc.onrender.com/) •
+🔗 **GitHub**: [Juggernaut7/convex](https://github.com/Juggernaut7/convex)
 
 ---
 
@@ -25,6 +27,16 @@ Convex is a cutting-edge prediction market protocol that brings the power of dec
 🔒 **Non-Custodial** - You control your funds, always
 
 *"Where conviction meets blockchain"* 💎⚡
+
+---
+
+## 🌐 Production Deployment
+
+- **Frontend (Vercel)**: https://convex-seven.vercel.app/
+- **Backend API (Render)**: https://convex-q9pc.onrender.com/ (health at `/health`, markets at `/api/markets`)
+- **Status endpoint**: hitting `/` returns API metadata for quick diagnostics
+
+Use the production URLs in `.env` files unless you're running everything locally.
 
 ---
 
@@ -334,9 +346,9 @@ pnpm install
 cd apps/backend
 cp .example .env
 
-# Configure .env
-MONGODB_URI=mongodb://localhost:27017/convex
+# Configure .env (defaults below are safe for local dev; swap in your hosted values)
 PORT=5000
+MONGODB_URI=mongodb://localhost:27017/convex
 MANAGER_ADDRESS=0xD1DbF3F78bC53d918CBca130Ddc7784574181075
 RPC_URL=https://forno.celo-sepolia.celo-testnet.org
 PRIVATE_KEY=your_resolver_private_key
@@ -356,7 +368,8 @@ NEXT_PUBLIC_MANAGER_ADDRESS=0xD1DbF3F78bC53d918CBca130Ddc7784574181075
 NEXT_PUBLIC_STAKING_TOKEN_ADDRESS=0x6c23508a9b310c5f2eb2e2efebeb748067478667
 NEXT_PUBLIC_RPC_URL=https://forno.celo-sepolia.celo-testnet.org
 NEXT_PUBLIC_CHAIN_ID=11142220
-NEXT_PUBLIC_API_BASE_URL=http://localhost:5000
+NEXT_PUBLIC_API_BASE_URL=https://convex-q9pc.onrender.com
+# For full local dev, switch NEXT_PUBLIC_API_BASE_URL to http://localhost:5000
 NEXT_PUBLIC_WC_PROJECT_ID=your_walletconnect_project_id
 
 # Start frontend
@@ -373,7 +386,7 @@ pnpm dev
 
 **Option A: Use Live Deployment**
 
-Visit the deployed frontend (if available)
+Visit https://convex-seven.vercel.app/ (production frontend powered by the hosted API at https://convex-q9pc.onrender.com/)
 
 Connect your wallet
 
@@ -389,7 +402,7 @@ cd apps/backend && pnpm dev
 cd apps/web && pnpm dev
 ```
 
-Open http://localhost:3000
+Open http://localhost:3000 (remember to point `NEXT_PUBLIC_API_BASE_URL` at http://localhost:5000)
 
 Connect your wallet
 
