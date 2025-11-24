@@ -61,11 +61,14 @@ router.get("/metadata/:onChainId", async (req, res) => {
       return res.status(400).json({ error: "Invalid onChainId" });
     }
 
+    logger.info({ onChainId }, "Fetching market metadata");
     const market = await findMarketByOnChainId(onChainId);
     if (!market) {
+      logger.info({ onChainId }, "Market metadata not found");
       return res.status(404).json({ error: "Market metadata not found" });
     }
 
+    logger.info({ onChainId, title: market.title }, "Market metadata found");
     res.json({
       id: (market._id as mongoose.Types.ObjectId).toString(),
       onChainId: market.onChainId,
@@ -80,8 +83,27 @@ router.get("/metadata/:onChainId", async (req, res) => {
       updatedAt: market.updatedAt,
     });
   } catch (error) {
-    logger.error({ error }, "Error fetching market metadata");
+    logger.error({ error, onChainId: req.params.onChainId }, "Error fetching market metadata");
     res.status(500).json({ error: "Failed to fetch market metadata" });
+  }
+});
+
+// Get all markets metadata (for debugging)
+router.get("/metadata", async (_req, res) => {
+  try {
+    const { MarketModel } = await import("../markets/market.model");
+    const markets = await MarketModel.find({}).sort({ onChainId: 1 }).limit(20);
+    res.json({
+      count: markets.length,
+      markets: markets.map((m) => ({
+        onChainId: m.onChainId,
+        title: m.title,
+        category: m.category,
+      })),
+    });
+  } catch (error) {
+    logger.error({ error }, "Error fetching all markets metadata");
+    res.status(500).json({ error: "Failed to fetch markets metadata" });
   }
 });
 

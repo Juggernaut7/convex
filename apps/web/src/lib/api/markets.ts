@@ -85,13 +85,23 @@ async function fetchMarketMetadata(onChainId: number): Promise<{ title: string; 
   }
 
   try {
+    // Add timeout for Render cold starts (30 seconds)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
     const response = await fetch(`${API_BASE_URL}/api/markets/metadata/${onChainId}`, {
-      next: { revalidate: 10 }, // Cache for 10 seconds
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
+    
+    clearTimeout(timeoutId);
     
     if (!response.ok) {
       if (response.status === 404) {
         // Market metadata not found - this is expected for markets created before metadata system
+        console.log(`[fetchMarketMetadata] Market ${onChainId} metadata not found (404)`);
         return null;
       }
       console.warn(`[fetchMarketMetadata] API returned ${response.status} for market ${onChainId}`);
@@ -99,13 +109,18 @@ async function fetchMarketMetadata(onChainId: number): Promise<{ title: string; 
     }
     
     const data = await response.json();
+    console.log(`[fetchMarketMetadata] Successfully fetched metadata for market ${onChainId}`);
     return {
       title: data.title,
       description: data.description,
       category: data.category,
     };
   } catch (error) {
-    console.error(`[fetchMarketMetadata] Error fetching metadata for market ${onChainId}:`, error);
+    if (error instanceof Error && error.name === "AbortError") {
+      console.warn(`[fetchMarketMetadata] Request timeout for market ${onChainId} (API may be cold starting)`);
+    } else {
+      console.error(`[fetchMarketMetadata] Error fetching metadata for market ${onChainId}:`, error);
+    }
     return null;
   }
 }
