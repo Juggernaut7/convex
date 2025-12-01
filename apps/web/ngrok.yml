@@ -1,0 +1,11 @@
+version: 2
+
+# Project-specific ngrok config for the Next.js web app
+# The authtoken is configured globally (~/.config/ngrok/ngrok.yml).
+
+tunnels:
+  web:
+    proto: http
+    addr: 3000  # Default Next.js dev port; actual tunnel will use detected port
+
+

@@ -368,8 +368,7 @@ NEXT_PUBLIC_MANAGER_ADDRESS=0xD1DbF3F78bC53d918CBca130Ddc7784574181075
 NEXT_PUBLIC_STAKING_TOKEN_ADDRESS=0x6c23508a9b310c5f2eb2e2efebeb748067478667
 NEXT_PUBLIC_RPC_URL=https://forno.celo-sepolia.celo-testnet.org
 NEXT_PUBLIC_CHAIN_ID=11142220
-NEXT_PUBLIC_API_BASE_URL=http://localhost:5000
-# For production, switch NEXT_PUBLIC_API_BASE_URL to https://convex-q9pc.onrender.com
+NEXT_PUBLIC_API_BASE_URL=https://convex-q9pc.onrender.com
 NEXT_PUBLIC_WC_PROJECT_ID=your_walletconnect_project_id
 
 # Start frontend
@@ -402,7 +401,7 @@ cd apps/backend && pnpm dev
 cd apps/web && pnpm dev
 ```
 
-Open http://localhost:3000 (remember to point `NEXT_PUBLIC_API_BASE_URL` at http://localhost:5000)
+Open http://localhost:3000 (remember to point `NEXT_PUBLIC_API_BASE_URL` at https://convex-q9pc.onrender.com if you want to use the hosted API)
 
 Connect your wallet
 

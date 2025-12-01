@@ -40,12 +40,13 @@ export const RESOLVER_ADDRESS = getEnv("NEXT_PUBLIC_RESOLVER_ADDRESS", {
 
 export const API_BASE_URL = getEnv("NEXT_PUBLIC_API_BASE_URL", {
   required: false,
-  defaultValue: "http://localhost:5000",
+  // Use Render-hosted backend by default so the app works out-of-the-box with the live API
+  defaultValue: "https://convex-q9pc.onrender.com",
 });
 
 // Log API URL to help debug (always log in browser to see what's being used)
 if (typeof window !== "undefined") {
-  const apiUrl = API_BASE_URL || "http://localhost:5000";
+  const apiUrl = API_BASE_URL || "https://convex-q9pc.onrender.com";
   console.log(`[API_BASE_URL] Using: ${apiUrl}`);
   if (apiUrl.includes("localhost") && window.location.hostname !== "localhost") {
     console.warn(
