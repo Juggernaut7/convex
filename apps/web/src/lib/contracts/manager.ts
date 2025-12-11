@@ -158,7 +158,7 @@ export async function ensureAllowance(
     abi: erc20Abi,
     functionName: "approve",
     args: [spender, required],
-    chain: celoSepolia,
+    chain: celoMainnet,
   });
 
   await publicClient.waitForTransactionReceipt({ hash });
@@ -188,7 +188,7 @@ export async function stakeOnMarket(
     abi: convexManagerAbi,
     functionName: "stake",
     args: [marketId, outcomeEnum, amount],
-    chain: celoSepolia,
+    chain: celoMainnet,
   });
 
   await publicClient.waitForTransactionReceipt({ hash });
@@ -210,7 +210,7 @@ export async function claimWinnings(
     abi: convexManagerAbi,
     functionName: "claim",
     args: [marketId],
-    chain: celoSepolia,
+    chain: celoMainnet,
   });
 
   await publicClient.waitForTransactionReceipt({ hash });
