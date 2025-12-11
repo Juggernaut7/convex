@@ -2,7 +2,7 @@ import { erc20Abi } from "viem";
 import { Address, Hex, PublicClient, WalletClient, createPublicClient, formatUnits, parseAbi, parseUnits, http } from "viem";
 
 import { DEFAULT_CHAIN_ID, MANAGER_CONTRACT_ADDRESS, RPC_URL, STAKING_TOKEN_ADDRESS } from "@/lib/constants";
-import { celoSepolia } from "@/lib/chains";
+import { celoMainnet } from "@/lib/chains";
 
 export const convexManagerAbi = parseAbi([
   "function stake(uint32 marketId, uint8 outcome, uint128 amount) external",
@@ -88,7 +88,7 @@ let cachedPublicClient: PublicClient | null = null;
 export function getPublicClient(): PublicClient {
   if (!cachedPublicClient) {
     cachedPublicClient = createPublicClient({
-      chain: celoSepolia,
+      chain: celoMainnet,
       transport: http(RPC_URL),
     });
   }

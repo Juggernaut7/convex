@@ -2,9 +2,9 @@ import { defineChain } from "viem";
 
 import { DEFAULT_CHAIN_ID, RPC_URL } from "@/lib/constants";
 
-export const celoSepolia = defineChain({
+export const celoMainnet = defineChain({
   id: DEFAULT_CHAIN_ID,
-  name: "Celo Sepolia",
+  name: "Celo",
   nativeCurrency: { decimals: 18, name: "CELO", symbol: "CELO" },
   rpcUrls: {
     default: {
@@ -16,10 +16,13 @@ export const celoSepolia = defineChain({
   },
   blockExplorers: {
     default: {
-      name: "Celo Explorer",
-      url: "https://celo-sepolia.blockscout.com",
+      name: "CeloScan",
+      url: "https://celoscan.io",
     },
   },
-  testnet: true,
+  testnet: false,
 });
+
+// Keep celoSepolia export for backwards compatibility, but it now points to mainnet
+export const celoSepolia = celoMainnet;
 

@@ -1,8 +1,9 @@
 PRIVATE_KEY=0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-RPC_URL=https://forno.celo-sepolia.celo-testnet.org
-CHAIN_ID=11142220
-STAKING_TOKEN_ADDRESS=0x6c23508A9b310C5f2eb2e2eFeBeB748067478667
+RPC_URL=https://forno.celo.org
+CHAIN_ID=42220
+# cUSD token on Celo mainnet
+STAKING_TOKEN_ADDRESS=0x765DE816845861e75A25fCA122bb6898B8B1282a
 TREASURY_ADDRESS=0xcccccccccccccccccccccccccccccccccccccccc
 CELOSCAN_API_KEY=your-celoscan-key
 REPORT_GAS=false
-MANAGER_CONTRACT_ADDRESS=0xD1DbF3F78bC53d918CBca130Ddc7784574181075
+MANAGER_CONTRACT_ADDRESS=0x0BD0DC85E111cA42363D8c67949c2A4ae85b1Bb7

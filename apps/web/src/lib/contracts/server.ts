@@ -3,10 +3,10 @@ import { celo } from "viem/chains";
 import { CONVEX_MANAGER_ADDRESS, convexManagerAbi, MarketType, MarketStatus, Outcome } from "./convex-manager";
 import { RPC_URL, DEFAULT_CHAIN_ID } from "@/lib/constants";
 
-const celoSepolia = {
+const celoMainnet = {
   ...celo,
   id: DEFAULT_CHAIN_ID,
-  network: "celo-sepolia",
+  network: "celo",
   rpcUrls: {
     default: {
       http: [RPC_URL],
@@ -15,7 +15,7 @@ const celoSepolia = {
 };
 
 const publicClient = createPublicClient({
-  chain: celoSepolia,
+  chain: celoMainnet,
   transport: http(),
 });
 

@@ -5,10 +5,10 @@ NODE_ENV=development
 # MongoDB (swap in your Atlas URI or hosted cluster for production)
 MONGO_URI=mongodb://localhost:27017/convex
 
-# Celo / contracts
-RPC_URL=https://forno.celo-sepolia.celo-testnet.org
-CHAIN_ID=11142220
-MANAGER_CONTRACT_ADDRESS=0xD1DbF3F78bC53d918CBca130Ddc7784574181075
+# Celo / contracts (Mainnet)
+RPC_URL=https://forno.celo.org
+CHAIN_ID=42220
+MANAGER_CONTRACT_ADDRESS=0x0BD0DC85E111cA42363D8c67949c2A4ae85b1Bb7
 
 # Resolver wallet (controls on-chain resolution)
 RESOLVER_PRIVATE_KEY=0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

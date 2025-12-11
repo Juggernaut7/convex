@@ -19,16 +19,16 @@ function getEnv(
 }
 
 export const MANAGER_CONTRACT_ADDRESS = getEnv("NEXT_PUBLIC_MANAGER_ADDRESS", {
-  defaultValue: "0xD1DbF3F78bC53d918CBca130Ddc7784574181075",
+  defaultValue: "0x0BD0DC85E111cA42363D8c67949c2A4ae85b1Bb7",
 }) as Address;
 export const STAKING_TOKEN_ADDRESS = getEnv("NEXT_PUBLIC_STAKING_TOKEN_ADDRESS", {
-  defaultValue: "0x6c23508a9b310c5f2eb2e2efebeb748067478667",
+  defaultValue: "0x765DE816845861e75A25fCA122bb6898B8B1282a",
 }) as Address;
 export const RPC_URL = getEnv("NEXT_PUBLIC_RPC_URL", {
-  defaultValue: "https://forno.celo-sepolia.celo-testnet.org",
+  defaultValue: "https://forno.celo.org",
 })!;
 export const DEFAULT_CHAIN_ID = Number(
-  getEnv("NEXT_PUBLIC_CHAIN_ID", { required: false, defaultValue: "11142220" })
+  getEnv("NEXT_PUBLIC_CHAIN_ID", { required: false, defaultValue: "42220" })
 );
 
 export const WALLET_CONNECT_PROJECT_ID = getEnv("NEXT_PUBLIC_WC_PROJECT_ID", { required: false });

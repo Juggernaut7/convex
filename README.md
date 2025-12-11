@@ -92,7 +92,7 @@ Use the production URLs in `.env` files unless you're running everything locally
          │ wagmi + RainbowKit                                                
          ▼                                                                     
 ┌─────────────────────────────────────────────────────────────────────┐
-│                    CELO BLOCKCHAIN (Celo Sepolia)                    │
+│                    CELO BLOCKCHAIN (Mainnet)                         │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                       │
 │  ┌──────────────────────────────────────────────────────────────┐  │
@@ -134,21 +134,21 @@ Use the production URLs in `.env` files unless you're running everything locally
 
 ## 📦 Deployed Smart Contracts
 
-### 🌐 Celo Sepolia Testnet
+### 🌐 Celo Mainnet
 
 | Contract | Address | Purpose |
 |----------|---------|---------|
-| **ConvexMarketManager** | `0xD1DbF3F78bC53d918CBca130Ddc7784574181075` | Main market factory, staking, resolution, and payout system |
-| **MockERC20** (Staking Token) | `0x6c23508a9b310c5f2eb2e2efebeb748067478667` | Test token for staking (cUSD analogue) |
+| **ConvexMarketManager** | `0x0BD0DC85E111cA42363D8c67949c2A4ae85b1Bb7` | Main market factory, staking, resolution, and payout system |
+| **cUSD** (Staking Token) | `0x765DE816845861e75A25fCA122bb6898B8B1282a` | Celo Dollar stablecoin for staking |
 
-### 🪙 Token Addresses (Celo Sepolia)
+### 🪙 Token Addresses (Celo Mainnet)
 
 | Token | Address | Description |
 |-------|---------|-------------|
 | **CELO** | Native | Celo native token |
-| **cUSD** | `0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1` | Celo Dollar stablecoin |
+| **cUSD** | `0x765DE816845861e75A25fCA122bb6898B8B1282a` | Celo Dollar stablecoin |
 
-🔗 **Verify on Celo Sepolia Explorer**: [CeloScan](https://sepolia.celoscan.io/)
+🔗 **Verify on CeloScan Explorer**: [CeloScan](https://celoscan.io/address/0x0BD0DC85E111cA42363D8c67949c2A4ae85b1Bb7)
 
 ---
 
@@ -254,7 +254,7 @@ Use the production URLs in `.env` files unless you're running everything locally
 - 🔗 **Solidity ^0.8.20** - Smart contract language
 - ⛑️ **Hardhat** - Development framework
 - 🧪 **OpenZeppelin** - Secure contract libraries
-- 🌐 **Celo (Sepolia)** - Blockchain network
+- 🌐 **Celo (Mainnet)** - Blockchain network
 - 📊 **ethers.js** - Blockchain interaction
 
 ### Oracle Integration
@@ -324,7 +324,7 @@ convex/
 - pnpm 8+
 - MongoDB (local or cloud)
 - MetaMask or Valora wallet
-- Celo Sepolia testnet tokens (get from faucet)
+- Celo mainnet tokens (CELO for gas, cUSD for staking)
 ```
 
 ### 1️⃣ Clone Repository
@@ -349,8 +349,8 @@ cp .example .env
 # Configure .env (defaults below are safe for local dev; swap in your hosted values)
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/convex
-MANAGER_ADDRESS=0xD1DbF3F78bC53d918CBca130Ddc7784574181075
-RPC_URL=https://forno.celo-sepolia.celo-testnet.org
+MANAGER_ADDRESS=0x0BD0DC85E111cA42363D8c67949c2A4ae85b1Bb7
+RPC_URL=https://forno.celo.org
 PRIVATE_KEY=your_resolver_private_key
 
 # Start backend
@@ -363,11 +363,11 @@ pnpm dev
 cd ../web
 cp .example .env.local
 
-# Configure .env.local
-NEXT_PUBLIC_MANAGER_ADDRESS=0xD1DbF3F78bC53d918CBca130Ddc7784574181075
-NEXT_PUBLIC_STAKING_TOKEN_ADDRESS=0x6c23508a9b310c5f2eb2e2efebeb748067478667
-NEXT_PUBLIC_RPC_URL=https://forno.celo-sepolia.celo-testnet.org
-NEXT_PUBLIC_CHAIN_ID=11142220
+# Configure .env.local (Celo Mainnet)
+NEXT_PUBLIC_MANAGER_ADDRESS=0x0BD0DC85E111cA42363D8c67949c2A4ae85b1Bb7
+NEXT_PUBLIC_STAKING_TOKEN_ADDRESS=0x765DE816845861e75A25fCA122bb6898B8B1282a
+NEXT_PUBLIC_RPC_URL=https://forno.celo.org
+NEXT_PUBLIC_CHAIN_ID=42220
 NEXT_PUBLIC_API_BASE_URL=https://convex-q9pc.onrender.com
 NEXT_PUBLIC_WC_PROJECT_ID=your_walletconnect_project_id
 
@@ -375,11 +375,11 @@ NEXT_PUBLIC_WC_PROJECT_ID=your_walletconnect_project_id
 pnpm dev
 ```
 
-### 5️⃣ Get Testnet Tokens
+### 5️⃣ Get Mainnet Tokens
 
-1. Visit [Celo Sepolia Faucet](https://faucet.celo.org)
-2. Enter your wallet address
-3. Receive testnet CELO & cUSD
+1. Buy CELO or cUSD from an exchange (Coinbase, Binance, etc.)
+2. Send to your wallet address
+3. You'll need CELO for gas and cUSD for staking on markets
 
 ### 6️⃣ Start Using!
 
@@ -489,8 +489,8 @@ pnpm test
 | Metric | Status |
 |--------|--------|
 | **Total Markets Created** | Growing |
-| **Total Value Locked** | Testnet Phase |
-| **Active Users** | Testnet Phase |
+| **Total Value Locked** | Mainnet Live |
+| **Active Users** | Mainnet Live |
 | **Resolution Accuracy** | 100% (Oracle-powered) |
 | **Average Transaction Time** | <5 seconds |
 | **Gas Cost per Stake** | ~$0.01 |
@@ -502,7 +502,7 @@ pnpm test
 ### ✅ Phase 1: Foundation (Q4 2024) - COMPLETE
 - ✅ Smart contract development
 - ✅ Frontend & backend development
-- ✅ Testnet deployment
+- ✅ Mainnet deployment
 - ✅ Basic features (Create, Stake, Resolve, Claim)
 - ✅ Oracle integration
 
@@ -564,7 +564,7 @@ Built with passion for the future of prediction markets on Celo 💚
 - 🌐 **Website**: [Coming Soon]
 - 📡 **Backend API**: [API Documentation]
 - 🔗 **GitHub**: [github.com/Juggernaut7/convex](https://github.com/Juggernaut7/convex)
-- 📊 **Contracts**: [CeloScan Explorer](https://sepolia.celoscan.io/address/0xD1DbF3F78bC53d918CBca130Ddc7784574181075)
+- 📊 **Contracts**: [CeloScan Explorer](https://celoscan.io/address/0x0BD0DC85E111cA42363D8c67949c2A4ae85b1Bb7)
 
 ---
 
@@ -580,9 +580,9 @@ Need help? We're here!
 
 ## ⚠️ Disclaimer
 
-**Important**: Convex is currently in **TESTNET phase**. Do not use real funds. Always:
+**Important**: Convex is now live on **Celo Mainnet**. Always:
 
-- ✅ Use Celo Sepolia testnet
+- ✅ Use Celo mainnet
 - ✅ Test with small amounts first
 - ✅ Understand smart contract risks
 - ✅ Do your own research (DYOR)
